@@ -31,6 +31,9 @@ async def db_engine() -> AsyncGenerator[AsyncEngine, None]:
         
     await engine.dispose()
 
+import os
+os.environ["GOOGLE_API_KEY"] = "dummy_for_tests"
+
 import src.models # Load all models
 from src.main import app
 from src.db.session import get_db
@@ -52,3 +55,10 @@ def override_get_db(async_session: AsyncSession) -> Generator[None, None, None]:
     app.dependency_overrides[get_db] = _get_test_db
     yield
     app.dependency_overrides.clear()
+
+from httpx import ASGITransport, AsyncClient
+
+@pytest_asyncio.fixture
+async def async_client() -> AsyncGenerator[AsyncClient, None]:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        yield client

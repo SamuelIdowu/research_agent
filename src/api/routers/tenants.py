@@ -8,9 +8,10 @@ from src.schemas.common import PaginatedResponse
 from src.schemas.tenant import TenantCreate, TenantResponse, TenantCreateResponse
 from src.repositories import tenant_repo
 
+public_router = APIRouter(tags=["Tenants"])
 router = APIRouter(tags=["Tenants"])
 
-@router.post("", response_model=TenantCreateResponse, status_code=status.HTTP_201_CREATED)
+@public_router.post("", response_model=TenantCreateResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(tenant_in: TenantCreate, db: AsyncSession = Depends(get_db)) -> TenantCreateResponse:
     if not tenant_in.name.strip():
         raise HTTPException(status_code=400, detail="Name cannot be empty")

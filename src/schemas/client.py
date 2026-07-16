@@ -26,3 +26,15 @@ class ClientResponse(UUIDModel, TimestampedModel):
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+class BYOKConfigRequest(BaseModel):
+    """Schema for configuring a client's BYOK settings."""
+    llm_provider: str
+    llm_model: str
+    llm_api_key: str
+
+class BYOKConfigResponse(BaseModel):
+    """Schema for returning BYOK configuration status. Never returns the API key."""
+    llm_provider: str
+    llm_model: str
+    byok_configured: bool

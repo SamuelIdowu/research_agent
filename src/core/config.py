@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     # Security
     ENCRYPTION_SECRET_KEY: Optional[str] = None
 
+    # OpenAI
+    OPENAI_API_KEY: Optional[str] = None
+
+    DEFAULT_LLM_MODEL: str = "test"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

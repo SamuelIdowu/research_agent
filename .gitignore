@@ -8,9 +8,28 @@ wheels/
 
 # Virtual environments
 .venv
+env/
 
 #Documentation
 /docs
 
 #variables
 .env*
+
+# Testing and type checking
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.tox/
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

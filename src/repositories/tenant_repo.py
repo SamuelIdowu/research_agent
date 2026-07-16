@@ -1,27 +1,23 @@
-import secrets
 import uuid
-import bcrypt
 from typing import Tuple, List, Optional
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.tenant import Tenant
 from src.schemas.tenant import TenantCreate
 
-async def create_tenant(session: AsyncSession, name: str) -> Tuple[Tenant, str]:
-    """Creates a new tenant and returns the tenant object along with the raw API key."""
-    raw_api_key = secrets.token_urlsafe(32)
-    # Hash the API key using bcrypt directly
-    api_key_bytes = raw_api_key.encode('utf-8')
-    salt = bcrypt.gensalt()
-    api_key_hash = bcrypt.hashpw(api_key_bytes, salt).decode('utf-8')
+from src.repositories.api_key_repo import create_api_key
 
+async def create_tenant(session: AsyncSession, name: str) -> Tuple[Tenant, str]:
+    """Creates a new tenant and an initial API key, returns both."""
     tenant = Tenant(
         name=name,
-        api_key_hash=api_key_hash
     )
     session.add(tenant)
     await session.flush()
     await session.refresh(tenant)
+
+    # Create initial API key
+    _, raw_api_key = await create_api_key(session, tenant.id, "default")
 
     return tenant, raw_api_key
 
@@ -55,8 +51,4 @@ async def deactivate_tenant(session: AsyncSession, tenant_id: uuid.UUID) -> Opti
         await session.refresh(tenant)
     return tenant
 
-async def get_tenant_by_api_key_hash(session: AsyncSession, key_hash: str) -> Optional[Tenant]:
-    """Retrieve a tenant by their API key hash."""
-    stmt = select(Tenant).where(Tenant.api_key_hash == key_hash, Tenant.is_active == True)
-    result = await session.execute(stmt)
-    return result.scalar_one_or_none()
+

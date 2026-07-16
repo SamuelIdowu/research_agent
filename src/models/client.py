@@ -26,6 +26,7 @@ class Client(Base):
     llm_model: Mapped[str | None] = mapped_column(String(100), nullable=True)
     usage_cap: Mapped[int | None] = mapped_column(Integer, nullable=True)
     usage_this_month: Mapped[int] = mapped_column(Integer, default=0)
+    usage_reset_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), onupdate=func.now())

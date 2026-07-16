@@ -47,7 +47,7 @@ async def test_document_chunk_has_vector_column(async_session: Any) -> None:
 
 @pytest.mark.asyncio
 async def test_voice_profile_unique_per_client(async_session: Any) -> None:
-    tenant = Tenant(name="Test Tenant", api_key_hash="hash123")
+    tenant = Tenant(name="Test Tenant")
     async_session.add(tenant)
     await async_session.commit()
     
@@ -66,7 +66,7 @@ async def test_voice_profile_unique_per_client(async_session: Any) -> None:
 
 @pytest.mark.asyncio
 async def test_cascade_delete_client(async_session: Any) -> None:
-    tenant = Tenant(name="Test Tenant 2", api_key_hash="hash456")
+    tenant = Tenant(name="Test Tenant 2")
     async_session.add(tenant)
     await async_session.commit()
     
@@ -82,7 +82,7 @@ async def test_cascade_delete_client(async_session: Any) -> None:
         document_id=doc.id, 
         client_id=client.id, 
         text="Sample text", 
-        embedding=[0.0]*1536,
+        embedding=[0.0]*768,
         chunk_index=0
     )
     async_session.add(chunk)
