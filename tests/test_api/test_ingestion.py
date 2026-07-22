@@ -26,8 +26,8 @@ async def test_ingest_text_document(async_client: AsyncClient, tenant: dict[str,
         mock_embed.return_value = [[0.1] * 768]
         
         response = await async_client.post(
-            f"/documents?client_id={client_data['id']}",
-            json={"source_type": "text", "content": "This is a test document."},
+            "/documents",
+            json={"client_id": client_data["id"], "source_type": "text", "content": "This is a test document."},
             headers={"X-Api-Key": tenant["raw_api_key"]}
         )
         assert response.status_code == 201
@@ -43,8 +43,8 @@ async def test_ingest_text_document(async_client: AsyncClient, tenant: dict[str,
 @pytest.mark.asyncio
 async def test_ingest_invalid_source_type(async_client: AsyncClient, tenant: dict[str, Any], client_data: dict[str, Any]):
     response = await async_client.post(
-        f"/documents?client_id={client_data['id']}",
-        json={"source_type": "unknown", "content": "This is a test document."},
+        "/documents",
+        json={"client_id": client_data["id"], "source_type": "unknown", "content": "This is a test document."},
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
     assert response.status_code == 422
@@ -57,13 +57,13 @@ async def test_list_documents(async_client: AsyncClient, tenant: dict[str, Any],
         
         # Ingest one document first
         await async_client.post(
-            f"/documents?client_id={client_data['id']}",
-            json={"source_type": "text", "content": "List test document."},
+            "/documents",
+            json={"client_id": client_data["id"], "source_type": "text", "content": "List test document."},
             headers={"X-Api-Key": tenant["raw_api_key"]}
         )
 
     response = await async_client.get(
-        f"/clients/{client_data['id']}/documents?tenant_id={tenant['id']}",
+        f"/documents?client_id={client_data['id']}",
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
     assert response.status_code == 200
@@ -79,8 +79,8 @@ async def test_delete_document_cascades_chunks(async_client: AsyncClient, tenant
         
         # Ingest one document first
         post_resp = await async_client.post(
-            f"/documents?client_id={client_data['id']}",
-            json={"source_type": "text", "content": "Delete test document."},
+            "/documents",
+            json={"client_id": client_data["id"], "source_type": "text", "content": "Delete test document."},
             headers={"X-Api-Key": tenant["raw_api_key"]}
         )
         doc_id = post_resp.json()["id"]

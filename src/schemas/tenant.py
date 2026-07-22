@@ -1,9 +1,17 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from .common import UUIDModel, TimestampedModel
 
 class TenantCreate(BaseModel):
     """Schema for creating a new tenant."""
-    name: str
+    name: str = Field(..., max_length=255, pattern=r"^[a-zA-Z0-9\s]+$")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "Acme Corp"
+            }
+        }
+    )
 
 class TenantResponse(UUIDModel, TimestampedModel):
     """Schema for a tenant response, excluding sensitive data like API keys."""

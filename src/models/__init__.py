@@ -6,6 +6,7 @@ from .document import Document
 from .document_chunk import DocumentChunk
 from .voice_profile import VoiceProfile
 from .generation_request import GenerationRequest
+from .analytics_event import AnalyticsEvent
 
 __all__ = [
     "Base",
@@ -16,4 +17,5 @@ __all__ = [
     "DocumentChunk",
     "VoiceProfile",
     "GenerationRequest",
+    "AnalyticsEvent",
 ]

@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
 from typing import Optional
 
 
@@ -29,6 +30,16 @@ class Settings(BaseSettings):
     DEFAULT_LLM_MODEL: str = "test"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    @model_validator(mode='after')
+    def validate_startup_config(self) -> 'Settings':
+        if not self.ENCRYPTION_SECRET_KEY or len(self.ENCRYPTION_SECRET_KEY) < 32:
+            raise ValueError("ENCRYPTION_SECRET_KEY must be set and at least 32 characters long.")
+        if not self.GEMINI_API_KEY and not self.OPENAI_API_KEY:
+            raise ValueError("At least one LLM API key (GEMINI_API_KEY or OPENAI_API_KEY) must be set.")
+        if not self.DATABASE_URL.startswith("postgresql+asyncpg://"):
+            raise ValueError("DATABASE_URL must start with 'postgresql+asyncpg://'")
+        return self
 
 
 settings = Settings()  # type: ignore[call-arg]

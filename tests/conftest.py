@@ -33,6 +33,7 @@ async def db_engine() -> AsyncGenerator[AsyncEngine, None]:
 
 import os
 os.environ["GOOGLE_API_KEY"] = "dummy_for_tests"
+os.environ["ENCRYPTION_SECRET_KEY"] = "ZHVtbXlfZm9yX3Rlc3RzX211c3RfYmVfMzJfYnl0ZXM="
 
 import src.models # Load all models
 from src.main import app

@@ -52,7 +52,7 @@ def parse_agent_output(raw_output: str) -> Tuple[str, list[dict]]:
 
 async def run_generation(
     deps: AgentDeps, brief: str, model_id: Optional[str] = None, api_key: Optional[str] = None
-) -> Tuple[str, list[dict]]:
+) -> Tuple[str, list[dict], int, int]:
     
     kwargs: dict[str, Any] = {}
     if model_id:
@@ -74,6 +74,15 @@ async def run_generation(
 
     result = await agent.run(brief, deps=deps, **kwargs)
     
+    # pyrefly: ignore [missing-attribute]
     draft, sources = parse_agent_output(result.data)
     
-    return draft, sources
+    try:
+        usage = result.usage() if callable(getattr(result, 'usage', None)) else result.usage
+        prompt_tokens = getattr(usage, 'request_tokens', 0) or getattr(usage, 'input_tokens', 0) or 0
+        completion_tokens = getattr(usage, 'response_tokens', 0) or getattr(usage, 'output_tokens', 0) or 0
+    except Exception:
+        prompt_tokens = 0
+        completion_tokens = 0
+    
+    return draft, sources, prompt_tokens, completion_tokens

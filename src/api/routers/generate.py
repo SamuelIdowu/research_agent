@@ -40,7 +40,8 @@ async def create_generation(
             headers={
                 "Cache-Control": "no-cache",
                 "X-Accel-Buffering": "no",
-                "Connection": "keep-alive"
+                "Connection": "keep-alive",
+                "X-Generation-ID": str(gen_request.id)
             }
         )
     

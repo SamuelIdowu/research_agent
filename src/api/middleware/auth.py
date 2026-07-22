@@ -7,9 +7,8 @@ from src.core.security import hash_api_key
 from src.models.api_key import ApiKey
 from src.models.tenant import Tenant
 
-async def authenticate_and_rate_limit(request: Request, session: AsyncSession) -> Tenant:
+async def authenticate_and_rate_limit(request: Request, session: AsyncSession, api_key_header: str | None) -> Tenant:
     """Authenticates the API key and enforces per-tenant rate limiting."""
-    api_key_header = request.headers.get("X-Api-Key")
     if not api_key_header:
         raise HTTPException(status_code=401, detail="Invalid API key")
     

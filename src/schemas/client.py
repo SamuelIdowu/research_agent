@@ -1,13 +1,21 @@
 import uuid
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from .common import UUIDModel, TimestampedModel
 
 class ClientCreate(BaseModel):
     """Schema for creating a new client."""
-    tenant_id: uuid.UUID
-    name: str
-    usage_cap: Optional[int] = None
+    name: str = Field(..., max_length=255)
+    usage_cap: Optional[int] = Field(None, gt=0, le=10000)
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "Marketing Team",
+                "usage_cap": 1000
+            }
+        }
+    )
 
 class ClientUpdate(BaseModel):
     """Schema for updating an existing client."""

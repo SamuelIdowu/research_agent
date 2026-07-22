@@ -80,3 +80,32 @@ async def test_retrieval_empty_kb(async_session: AsyncSession, sample_client: Cl
         mock_embed.return_value = [[0.1] * 768]
         results = await retrieve_chunks(async_session, "test", sample_client.id)
         assert len(results) == 0
+
+@pytest.mark.asyncio
+async def test_retrieval_with_scores(async_session: AsyncSession, sample_client: Client):
+    from unittest.mock import patch
+    from src.services.retrieval import retrieve_chunks_with_scores
+    with patch("src.services.retrieval.embed_texts") as mock_embed:
+        mock_embed.return_value = [[0.1] * 768]
+        
+        doc = Document(client_id=sample_client.id, tenant_id=sample_client.tenant_id, source_type="text")
+        async_session.add(doc)
+        await async_session.commit()
+        await async_session.refresh(doc)
+        
+        chunk = DocumentChunk(
+            document_id=doc.id,
+            client_id=sample_client.id,
+            text="This is a test document",
+            embedding=[0.1]*768,
+            chunk_index=0
+        )
+        async_session.add(chunk)
+        await async_session.commit()
+        
+        results = await retrieve_chunks_with_scores(async_session, "test", sample_client.id)
+        assert len(results) == 1
+        # Check that we get a tuple of (DocumentChunk, score)
+        chunk_res, score = results[0]
+        assert chunk_res.text == "This is a test document"
+        assert isinstance(score, float)

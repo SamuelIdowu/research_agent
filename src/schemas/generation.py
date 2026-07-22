@@ -8,6 +8,15 @@ class GenerateRequest(BaseModel):
     brief: str = Field(..., min_length=1, max_length=5000)
     client_id: UUID
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "brief": "Write a short blog post about AI agents.",
+                "client_id": "123e4567-e89b-12d3-a456-426614174000"
+            }
+        }
+    }
+
 
 class SourceCitation(BaseModel):
     type: Literal["kb", "web"]

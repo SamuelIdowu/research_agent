@@ -21,7 +21,7 @@ async def client(async_client: Any, tenant: Any) -> Any:
 
 @pytest.mark.asyncio
 async def test_configure_byok_success(async_client: Any, tenant: Any, client: Any) -> None:
-    response = await async_client.put(
+    response = await async_client.post(
         f"/clients/{client['id']}/byok?tenant_id={tenant['id']}",
         json={"llm_provider": "openai", "llm_model": "gpt-4", "llm_api_key": "sk-test-key"},
         headers={"X-Api-Key": tenant["raw_api_key"]}
@@ -36,7 +36,7 @@ async def test_configure_byok_success(async_client: Any, tenant: Any, client: An
 @pytest.mark.asyncio
 async def test_remove_byok_success(async_client: Any, tenant: Any, client: Any) -> None:
     # First configure
-    await async_client.put(
+    await async_client.post(
         f"/clients/{client['id']}/byok?tenant_id={tenant['id']}",
         json={"llm_provider": "openai", "llm_model": "gpt-4", "llm_api_key": "sk-test-key"},
         headers={"X-Api-Key": tenant["raw_api_key"]}

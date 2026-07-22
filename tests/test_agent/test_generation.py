@@ -17,12 +17,17 @@ def mock_deps():
 @pytest.mark.asyncio
 @patch("src.agent.agent.agent.run")
 async def test_run_generation_basic(mock_agent_run, mock_deps):
+    class MockUsage:
+        input_tokens = 100
+        output_tokens = 50
+        
     class MockResult:
         data = "<DRAFT>\nTest draft\n</DRAFT>\n<SOURCES>\n[{\"type\": \"kb\", \"document_id\": \"123\", \"excerpt_used\": \"KB source\"}]\n</SOURCES>"
+        usage = MockUsage()
         
     mock_agent_run.return_value = MockResult()
     
-    draft, sources = await run_generation(mock_deps, "brief")
+    draft, sources, prompt_tokens, comp_tokens = await run_generation(mock_deps, "brief")
     
     assert draft == "Test draft"
     assert len(sources) == 1
@@ -57,7 +62,7 @@ async def test_generation_logs_to_db(
     
     gen_id = uuid4()
     mock_create.return_value = GenerationRequest(id=gen_id, status="pending")
-    mock_run.return_value = ("Test draft", [])
+    mock_run.return_value = ("Test draft", [], 100, 50)
     mock_update.return_value = GenerationRequest(id=gen_id, status="completed")
     
     result = await generate_content(AsyncMock(), MockClient(), MockTenant(), "brief")

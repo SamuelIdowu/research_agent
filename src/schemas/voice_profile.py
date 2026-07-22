@@ -9,6 +9,17 @@ class VoiceProfileSet(BaseModel):
     banned_words: Optional[list[str]] = Field(None, max_length=50, description="Words/phrases to avoid, max 50 items")
     extra_instructions: Optional[str] = Field(None, max_length=2000, description="Free-text catch-all, max 2000 chars")
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "tone": "professional, objective",
+                "pov": "third_person",
+                "banned_words": ["in conclusion", "synergy"],
+                "extra_instructions": "Always provide concise answers."
+            }
+        }
+    )
+
 class VoiceProfileResponse(VoiceProfileSet):
     id: UUID
     client_id: UUID

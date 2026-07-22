@@ -7,6 +7,8 @@ from src.db.session import get_db
 from src.schemas.common import PaginatedResponse
 from src.schemas.tenant import TenantCreate, TenantResponse, TenantCreateResponse
 from src.repositories import tenant_repo
+from src.models.tenant import Tenant
+from src.api.dependencies import get_current_tenant
 
 public_router = APIRouter(tags=["Tenants"])
 router = APIRouter(tags=["Tenants"])
@@ -44,6 +46,10 @@ async def list_tenants(
         page=page,
         page_size=page_size
     )
+
+@router.get("/me", response_model=TenantResponse)
+async def get_current_tenant_route(tenant: Tenant = Depends(get_current_tenant)) -> TenantResponse:
+    return TenantResponse.model_validate(tenant)
 
 @router.get("/{tenant_id}", response_model=TenantResponse)
 async def get_tenant(tenant_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> TenantResponse:

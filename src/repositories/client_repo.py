@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.client import Client
 from src.schemas.client import ClientCreate, ClientUpdate
 
-async def create_client(session: AsyncSession, data: ClientCreate) -> Client:
+async def create_client(session: AsyncSession, data: ClientCreate, tenant_id: uuid.UUID) -> Client:
     """Creates a new client for a specific tenant."""
     client = Client(
-        tenant_id=data.tenant_id,
+        tenant_id=tenant_id,
         name=data.name,
         usage_cap=data.usage_cap
     )

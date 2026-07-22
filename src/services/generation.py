@@ -15,6 +15,8 @@ from src.services.voice_profile import (
 )
 from src.models.generation_request import GenerationRequest
 from src.services import byok
+from src.services import analytics
+import time
 
 if TYPE_CHECKING:
     from src.models.client import Client
@@ -57,6 +59,15 @@ async def generate_content(
         brief=brief
     )
     
+    start_time = time.time()
+    await analytics.log_event(
+        session=session,
+        tenant_id=tenant.id,
+        client_id=client.id,
+        generation_request_id=gen_request.id,
+        event_name="generation_started"
+    )
+    
     try:
         # Enforce usage cap
         await check_and_increment_usage(session, client)
@@ -77,7 +88,10 @@ async def generate_content(
         )
         
         # Run agent
-        draft_text, sources_list = await run_generation(deps, brief, model_id=model_id, api_key=api_key)
+        draft_text, sources_list, prompt_tokens, completion_tokens = await run_generation(deps, brief, model_id=model_id, api_key=api_key)
+        
+        duration_ms = int((time.time() - start_time) * 1000)
+        total_tokens = (prompt_tokens or 0) + (completion_tokens or 0)
         
         # Validation
         error_msg = None
@@ -97,17 +111,43 @@ async def generate_content(
             llm_provider_used=client.llm_provider or "google",
 
             status="completed",
-            error_message=error_msg
+            error_message=error_msg,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            duration_ms=duration_ms
+        )
+        
+        await analytics.log_event(
+            session=session,
+            tenant_id=tenant.id,
+            client_id=client.id,
+            generation_request_id=gen_request.id,
+            event_name="generation_completed",
+            duration_ms=duration_ms,
+            tokens_used=total_tokens,
+            metadata={"model": model_id, "provider": client.llm_provider or "google", "sources_count": len(sources_list) if sources_list else 0}
         )
         
         return updated_request
         
     except Exception as e:
         # Handle failures gracefully by updating the request
+        duration_ms = int((time.time() - start_time) * 1000)
         updated_request = await generation_repo.update_generation_request(
             session=session,
             request_id=gen_request.id,
             status="failed",
-            error_message=str(e)
+            error_message=str(e),
+            duration_ms=duration_ms
+        )
+        await analytics.log_event(
+            session=session,
+            tenant_id=tenant.id,
+            client_id=client.id,
+            generation_request_id=gen_request.id,
+            event_name="generation_failed",
+            duration_ms=duration_ms,
+            metadata={"error": str(e)}
         )
         raise

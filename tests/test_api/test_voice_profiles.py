@@ -4,20 +4,20 @@ from uuid import uuid4
 
 @pytest.fixture
 async def tenant(async_client: Any) -> Any:
-    response = await async_client.post("/tenants", json={"name": f"VP Test Tenant {uuid4()}"})
+    response = await async_client.post("/tenants", json={"name": f"VP Test Tenant {uuid4().hex}"})
     return response.json()
 
 @pytest.fixture
 async def client_obj(async_client: Any, tenant: Any) -> Any:
     response = await async_client.post("/clients", json={
         "tenant_id": tenant["id"],
-        "name": f"VP Test Client {uuid4()}"
+        "name": f"VP Test Client {uuid4().hex}"
     }, headers={"X-Api-Key": tenant["raw_api_key"]})
     return response.json()
 
 @pytest.fixture
 async def tenant_2(async_client: Any) -> Any:
-    response = await async_client.post("/tenants", json={"name": f"VP Test Tenant 2 {uuid4()}"})
+    response = await async_client.post("/tenants", json={"name": f"VP Test Tenant 2 {uuid4().hex}"})
     return response.json()
 
 @pytest.mark.asyncio
@@ -29,7 +29,7 @@ async def test_set_voice_profile(async_client: Any, tenant: Any, client_obj: Any
         "extra_instructions": "Always be polite."
     }
     response = await async_client.put(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         json=payload, 
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
@@ -46,13 +46,13 @@ async def test_set_voice_profile(async_client: Any, tenant: Any, client_obj: Any
 async def test_get_voice_profile(async_client: Any, tenant: Any, client_obj: Any) -> None:
     payload = {"tone": "warm"}
     await async_client.put(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         json=payload, 
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
     
     response = await async_client.get(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
     assert response.status_code == 200
@@ -63,14 +63,14 @@ async def test_get_voice_profile(async_client: Any, tenant: Any, client_obj: Any
 async def test_update_voice_profile(async_client: Any, tenant: Any, client_obj: Any) -> None:
     payload = {"tone": "cold"}
     await async_client.put(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         json=payload, 
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
     
     payload2 = {"tone": "warm", "banned_words": ["word"]}
     response = await async_client.put(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         json=payload2, 
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
@@ -83,19 +83,19 @@ async def test_update_voice_profile(async_client: Any, tenant: Any, client_obj: 
 async def test_delete_voice_profile(async_client: Any, tenant: Any, client_obj: Any) -> None:
     payload = {"tone": "warm"}
     await async_client.put(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         json=payload, 
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
     
     delete_resp = await async_client.delete(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
     assert delete_resp.status_code == 204
     
     get_resp = await async_client.get(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )
     assert get_resp.status_code == 404
@@ -105,7 +105,7 @@ async def test_voice_profile_wrong_tenant(async_client: Any, tenant: Any, tenant
     # Try to PUT to client_obj with tenant_2's api key
     payload = {"tone": "warm"}
     response = await async_client.put(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         json=payload, 
         headers={"X-Api-Key": tenant_2["raw_api_key"]}
     )
@@ -118,7 +118,7 @@ async def test_voice_profile_banned_words_list(async_client: Any, tenant: Any, c
         "banned_words": [f"word{i}" for i in range(51)]
     }
     response = await async_client.put(
-        f"/clients/{client_obj['id']}/voice-profile", 
+        f"/clients/{client_obj['id']}/voice_profile", 
         json=payload, 
         headers={"X-Api-Key": tenant["raw_api_key"]}
     )

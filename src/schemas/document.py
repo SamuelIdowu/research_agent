@@ -1,15 +1,28 @@
 from datetime import datetime
 from typing import Literal, Optional
 from uuid import UUID
+import re
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator, Field, AnyHttpUrl
 
 
 class DocumentIngestRequest(BaseModel):
+    client_id: UUID
     source_type: Literal["text", "url"]
     title: Optional[str] = None
-    content: Optional[str] = None
-    url: Optional[str] = None
+    content: Optional[str] = Field(None, max_length=500000)
+    url: Optional[AnyHttpUrl] = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "client_id": "123e4567-e89b-12d3-a456-426614174000",
+                "source_type": "text",
+                "title": "Example Document",
+                "content": "This is some example content.",
+            }
+        }
+    )
 
     @model_validator(mode="after")
     def check_source_content(self) -> "DocumentIngestRequest":

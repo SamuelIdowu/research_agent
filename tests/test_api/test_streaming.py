@@ -15,7 +15,7 @@ from src.api.dependencies import get_current_tenant
 @pytest.fixture
 async def sample_client(async_session: AsyncSession):
     tenant_obj, _ = await tenant_repo.create_tenant(async_session, "Test Tenant")
-    client = await client_repo.create_client(async_session, ClientCreate(name="Test Client", tenant_id=tenant_obj.id))
+    client = await client_repo.create_client(async_session, ClientCreate(name="Test Client", usage_cap=50), tenant_obj.id)
     await async_session.commit()
     return client
 
@@ -50,7 +50,7 @@ async def test_non_streaming_still_works(
     tenant = await async_session.get(Tenant, sample_client.tenant_id)
     app.dependency_overrides[get_current_tenant] = lambda: tenant
     
-    mock_run_generation.return_value = ("Draft content here.", [{"type": "kb", "excerpt": "Test"}])
+    mock_run_generation.return_value = ("Draft content here.", [{"type": "kb", "excerpt": "Test"}], 100, 50)
     
     response = await async_client.post(
         "/generate",

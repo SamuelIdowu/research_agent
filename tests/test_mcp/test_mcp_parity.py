@@ -60,8 +60,9 @@ async def test_mcp_parity_ingest_document(mcp_parity_setup, async_client: AsyncC
     
     # 1. REST Call
     rest_resp = await async_client.post(
-        f"/documents?client_id={client_id}",
+        "/documents",
         json={
+            "client_id": client_id,
             "source_type": "text",
             "content": "REST content block",
             "title": "REST Doc"

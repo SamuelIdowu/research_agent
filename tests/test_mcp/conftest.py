@@ -13,7 +13,7 @@ def patch_mcp_session_maker(db_engine):
 @pytest.fixture(autouse=True)
 def mock_run_generation():
     with patch("src.services.generation.run_generation") as mock:
-        mock.return_value = ("Draft content here.", [{"type": "kb", "excerpt": "Test"}])
+        mock.return_value = ("Draft content here.", [{"type": "kb", "excerpt": "Test"}], 100, 50)
         yield mock
 
 @pytest.fixture(autouse=True)

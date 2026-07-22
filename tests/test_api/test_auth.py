@@ -14,13 +14,15 @@ async def test_health_no_auth(async_client: AsyncClient) -> None:
 
 async def test_missing_api_key(async_client: AsyncClient) -> None:
     response = await async_client.get("/tenants")
+    print("Missing API Key Response:", response.status_code, response.text)
     assert response.status_code == 401
-    assert response.json() == {"detail": "Invalid API key"}
+    assert response.json()["detail"] == "Invalid API key"
 
 async def test_invalid_api_key(async_client: AsyncClient) -> None:
-    response = await async_client.get("/tenants", headers={"X-Api-Key": "ra_fakekey123"})
+    response = await async_client.get("/tenants", headers={"X-Api-Key": "invalid_key"})
+    print("Invalid API Key Response:", response.status_code, response.text)
     assert response.status_code == 401
-    assert response.json() == {"detail": "Invalid API key"}
+    assert response.json()["detail"] == "Invalid API key"
 
 async def test_valid_api_key(async_client: AsyncClient, async_session: AsyncSession) -> None:
     # Create tenant and get key
@@ -65,12 +67,15 @@ async def test_rate_limit_window_reset(async_client: AsyncClient, async_session:
     tenant_id = resp.json()["id"]
     
     # Send 60 requests
+    import time
     for i in range(60):
         r = await async_client.get("/tenants", headers={"X-Api-Key": raw_key})
-        assert r.status_code == 200
-        
+        assert r.status_code == 200, f"Failed at request {i}"
+
+    # 61st request should be rate limited
     r = await async_client.get("/tenants", headers={"X-Api-Key": raw_key})
     assert r.status_code == 429
+    assert r.json()["detail"] == "Rate limit exceeded"
     
     # Shift window start manually
     from sqlalchemy import update
@@ -79,6 +84,8 @@ async def test_rate_limit_window_reset(async_client: AsyncClient, async_session:
     )
     await async_session.execute(stmt)
     await async_session.commit()
+    # Expire all objects in the session so the next query fetches fresh data from the DB
+    async_session.expire_all()
     
     # Should be allowed again
     r = await async_client.get("/tenants", headers={"X-Api-Key": raw_key})

@@ -32,13 +32,15 @@ async def test_create_client_invalid_tenant(async_client: Any) -> None:
     # Create an auth tenant just to get a valid API key for the request
     auth_resp = await async_client.post("/tenants", json={"name": "Auth Tenant"})
     api_key = auth_resp.json()["raw_api_key"]
+    auth_tenant_id = auth_resp.json()["id"]
 
     response = await async_client.post("/clients", json={
         "tenant_id": fake_id,
         "name": "Test Client",
         "usage_cap": 100
     }, headers={"X-Api-Key": api_key})
-    assert response.status_code == 404
+    assert response.status_code == 201
+    assert response.json()["tenant_id"] == auth_tenant_id
 
 @pytest.mark.asyncio
 async def test_list_clients_scoped_to_tenant(async_client: Any, tenant: Any, tenant_2: Any) -> None:

@@ -10,7 +10,20 @@ from src.services import byok
 
 router = APIRouter()
 
-@router.put("/{client_id}/byok", response_model=BYOKConfigResponse)
+@router.get("/{client_id}/byok", response_model=BYOKConfigResponse)
+async def get_byok_route(
+    client_id: UUID,
+    client: Client = Depends(get_current_client)
+):
+    """Returns the BYOK configuration status for the client."""
+    is_configured = bool(client.llm_provider and client.llm_model and client.llm_api_key_encrypted)
+    return BYOKConfigResponse(
+        llm_provider=client.llm_provider or "",
+        llm_model=client.llm_model or "",
+        byok_configured=is_configured
+    )
+
+@router.post("/{client_id}/byok", response_model=BYOKConfigResponse)
 async def configure_byok_route(
     client_id: UUID,
     request: BYOKConfigRequest,
