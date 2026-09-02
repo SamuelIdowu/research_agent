@@ -32,21 +32,52 @@ def _dynamic_system_prompt(ctx: RunContext[AgentDeps]) -> str:
 
 
 def parse_agent_output(raw_output: str) -> Tuple[str, list[dict]]:
-    draft_match = re.search(r"<DRAFT>\n?(.*?)\n?</DRAFT>", raw_output, re.DOTALL)
-    sources_match = re.search(r"<SOURCES>\n?(.*?)\n?</SOURCES>", raw_output, re.DOTALL)
+    """
+    Robustly parses agent output into (draft, sources).
+    Supports <DRAFT>...<SOURCES> format, markdown JSON code fences,
+    and provides a safe fallback rather than failing the generation request.
+    """
+    if not raw_output or not raw_output.strip():
+        return "", []
 
-    if not draft_match or not sources_match:
-        raise ValueError("Output missing required <DRAFT> or <SOURCES> tags.")
+    draft_match = re.search(r"<DRAFT>\n?(.*?)\n?</DRAFT>", raw_output, re.DOTALL | re.IGNORECASE)
+    sources_match = re.search(r"<SOURCES>\n?(.*?)\n?</SOURCES>", raw_output, re.DOTALL | re.IGNORECASE)
 
-    draft = draft_match.group(1).strip()
-    sources_str = sources_match.group(1).strip()
+    draft = ""
+    sources: list[dict] = []
 
-    try:
-        sources = json.loads(sources_str)
-        if not isinstance(sources, list):
-            raise ValueError("Sources must be a JSON array.")
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Failed to parse sources JSON: {e}")
+    if draft_match:
+        draft = draft_match.group(1).strip()
+    
+    if sources_match:
+        sources_str = sources_match.group(1).strip()
+        # Clean markdown code blocks if the LLM wrapped it in ```json ... ```
+        if sources_str.startswith("```"):
+            sources_str = re.sub(r"^```[a-zA-Z]*\n?", "", sources_str)
+            sources_str = re.sub(r"\n?```$", "", sources_str).strip()
+        
+        try:
+            parsed = json.loads(sources_str)
+            if isinstance(parsed, list):
+                sources = [s for s in parsed if isinstance(s, dict)]
+        except json.JSONDecodeError:
+            # Attempt regex extraction of individual json objects
+            json_objects = re.findall(r"\{[^{}]*\}", sources_str)
+            for obj_str in json_objects:
+                try:
+                    obj = json.loads(obj_str)
+                    if isinstance(obj, dict):
+                        sources.append(obj)
+                except Exception:
+                    pass
+
+    # Fallback if tags were omitted by the model
+    if not draft:
+        if sources_match:
+            # Take everything before <SOURCES> as the draft
+            draft = raw_output[:sources_match.start()].strip()
+        else:
+            draft = raw_output.strip()
 
     return draft, sources
 
@@ -74,8 +105,8 @@ async def run_generation(
 
     result = await agent.run(brief, deps=deps, **kwargs)
     
-    # pyrefly: ignore [missing-attribute]
-    draft, sources = parse_agent_output(result.data)
+    raw_output = getattr(result, "output", None) or getattr(result, "data", None) or str(result)
+    draft, sources = parse_agent_output(raw_output)
     
     try:
         usage = result.usage() if callable(getattr(result, 'usage', None)) else result.usage

@@ -68,6 +68,73 @@ async def create_generation(
     )
 
 
+from fastapi import BackgroundTasks
+
+async def _run_async_generation_task(
+    tenant_id: uuid.UUID,
+    client_id: uuid.UUID,
+    brief: str,
+    gen_request_id: uuid.UUID
+):
+    """Background worker for asynchronous generation jobs."""
+    from src.db.session import async_session_maker
+    from src.repositories import generation_repo
+    from src.models.client import Client
+    from src.models.tenant import Tenant
+    
+    async with async_session_maker() as session:
+        try:
+            client = await session.get(Client, client_id)
+            tenant = await session.get(Tenant, tenant_id)
+            if not client or not tenant:
+                await generation_repo.update_generation_request(
+                    session=session,
+                    request_id=gen_request_id,
+                    status="failed",
+                    error_message="Client or Tenant not found for async task"
+                )
+                return
+
+            await generate_content(session, client, tenant, brief)
+        except Exception as e:
+            await generation_repo.update_generation_request(
+                session=session,
+                request_id=gen_request_id,
+                status="failed",
+                error_message=str(e)
+            )
+
+@router.post("/generations/async", status_code=status.HTTP_202_ACCEPTED)
+async def create_async_generation(
+    request: GenerateRequest,
+    background_tasks: BackgroundTasks,
+    tenant: Tenant = Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_db)
+):
+    """Creates an asynchronous generation job and returns immediately with a request_id."""
+    client = await get_current_client(request.client_id, tenant, db)
+    
+    gen_request = await generation_repo.create_generation_request(
+        session=db,
+        tenant_id=tenant.id,
+        client_id=client.id,
+        brief=request.brief
+    )
+    
+    background_tasks.add_task(
+        _run_async_generation_task,
+        tenant_id=tenant.id,
+        client_id=client.id,
+        brief=request.brief,
+        gen_request_id=gen_request.id
+    )
+    
+    return {
+        "request_id": gen_request.id,
+        "status": "pending",
+        "message": "Generation job queued successfully. Poll /generations/{request_id} for status."
+    }
+
 @router.get("/generations/{request_id}", response_model=GenerationRequestResponse)
 async def get_generation(
     request_id: uuid.UUID,
@@ -90,3 +157,4 @@ async def get_generation(
         created_at=gen_request.created_at,
         error_message=gen_request.error_message
     )
+

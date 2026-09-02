@@ -30,8 +30,15 @@ async def configure_byok_route(
     client: Client = Depends(get_current_client),
     session: AsyncSession = Depends(get_db)
 ):
-    """Configures Bring-Your-Own-Key for the client."""
+    """Configures Bring-Your-Own-Key for the client with pre-flight validation."""
     try:
+        # Validate the key with the provider before encrypting and saving
+        await byok.validate_provider_key(
+            provider=request.llm_provider,
+            model=request.llm_model,
+            api_key=request.llm_api_key
+        )
+        
         updated_client = byok.configure_byok(
             client=client, 
             provider=request.llm_provider, 
