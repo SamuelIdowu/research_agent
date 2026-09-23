@@ -19,6 +19,8 @@ class AgentDeps:
 
 async def search_knowledge_base(ctx: RunContext[AgentDeps], query: str) -> str:
     """Always use this first to ground the draft in the client's specific context. Returns text with UUIDs for citations."""
+    if not ctx.deps.session:
+        return "No knowledge base session available."
     chunks_with_scores = await retrieve_chunks_with_scores(
         ctx.deps.session, query, ctx.deps.client_id, top_k=5
     )
@@ -35,12 +37,16 @@ async def search_knowledge_base(ctx: RunContext[AgentDeps], query: str) -> str:
 
 async def search_web(ctx: RunContext[AgentDeps], query: str) -> str:
     """Only use this if the brief asks for real-world events or trends not covered by the client's knowledge base. Returns text with [W#] identifiers."""
-    if not ctx.deps.tavily_api_key:
-        return "Web search unavailable: No API key configured."
+    if not ctx.deps.tavily_api_key or ctx.deps.tavily_api_key.startswith("test_") or "dev" in ctx.deps.tavily_api_key:
+        return "Web search skipped: Using local knowledge base and LLM context."
 
-    client = AsyncTavilyClient(api_key=ctx.deps.tavily_api_key)
+    import asyncio
     try:
-        response = await client.search(query=query, max_results=5, include_answer=True)
+        client = AsyncTavilyClient(api_key=ctx.deps.tavily_api_key)
+        response = await asyncio.wait_for(
+            client.search(query=query, max_results=3, include_answer=False),
+            timeout=5.0
+        )
         results = []
         for i, res in enumerate(response.get("results", []), 1):
             title = res.get("title", "No Title")

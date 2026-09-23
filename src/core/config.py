@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
 
-    DEFAULT_LLM_MODEL: str = "test"
+    DEFAULT_LLM_MODEL: str = "gemini-3.5-flash"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

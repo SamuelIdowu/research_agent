@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, model_validator, Field, AnyHttpUrl
 
 class DocumentIngestRequest(BaseModel):
     client_id: UUID
-    source_type: Literal["text", "url"]
+    source_type: Literal["text", "url"] = "text"
     title: Optional[str] = None
     content: Optional[str] = Field(None, max_length=500000)
     url: Optional[AnyHttpUrl] = None

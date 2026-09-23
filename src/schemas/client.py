@@ -5,6 +5,7 @@ from .common import UUIDModel, TimestampedModel
 
 class ClientCreate(BaseModel):
     """Schema for creating a new client."""
+    id: Optional[uuid.UUID] = None
     name: str = Field(..., max_length=255)
     usage_cap: Optional[int] = Field(None, gt=0, le=10000)
 

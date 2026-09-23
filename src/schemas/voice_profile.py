@@ -5,7 +5,13 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class VoiceProfileSet(BaseModel):
     tone: Optional[str] = Field(None, description="Free-text tone, e.g. 'warm, conversational'")
-    pov: Optional[Literal["first_person", "second_person", "third_person"]] = Field(None, description="Point of view")
+    pov: Optional[Literal["first_person", "second_person", "third_person", "first-person", "second-person", "third-person"]] = Field(None, description="Point of view")
+
+    @classmethod
+    def normalize_pov(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            return v.replace("-", "_")
+        return v
     banned_words: Optional[list[str]] = Field(None, max_length=50, description="Words/phrases to avoid, max 50 items")
     extra_instructions: Optional[str] = Field(None, max_length=2000, description="Free-text catch-all, max 2000 chars")
 

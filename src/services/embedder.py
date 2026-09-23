@@ -2,6 +2,7 @@ import asyncio
 from typing import Optional
 
 from google import genai
+from google.genai import types
 
 from src.core.config import settings
 
@@ -32,8 +33,9 @@ async def embed_texts(texts: list[str], client_api_key: Optional[str] = None) ->
     for attempt in range(max_retries + 1):
         try:
             response = await client.aio.models.embed_content(
-                model="text-embedding-004",
-                contents=texts
+                model="gemini-embedding-2-preview",
+                contents=texts,
+                config=types.EmbedContentConfig(output_dimensionality=768)
             )
             if response.embeddings:
                 return [data.values for data in response.embeddings if data.values is not None]

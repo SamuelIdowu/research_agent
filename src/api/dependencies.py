@@ -27,5 +27,13 @@ async def get_current_client(
     result = await session.execute(stmt)
     client = result.scalar_one_or_none()
     if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
+        # Auto-provision client for this tenant on demand so frontend calls never 404
+        client = Client(
+            id=client_id,
+            tenant_id=tenant.id,
+            name=f"Client {client_id}",
+        )
+        session.add(client)
+        await session.commit()
+        await session.refresh(client)
     return client

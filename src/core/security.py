@@ -42,5 +42,5 @@ def decrypt_byok_key(ciphertext: str, secret: Optional[str] = None) -> str:
     try:
         return f.decrypt(ciphertext.encode()).decode()
     except InvalidToken as e:
-        raise ValueError("Decryption failed: invalid token or secret key") from e
+        raise ValueError("Failed to decrypt: invalid token or secret key") from e
 

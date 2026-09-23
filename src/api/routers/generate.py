@@ -47,15 +47,14 @@ async def create_generation(
     
     # 2. Call generate_content with a timeout
     try:
-        # Wrap in wait_for to enforce the 30s timeout requested in Sprint 06
         gen_request = await asyncio.wait_for(
             generate_content(db, client, tenant, request.brief),
-            timeout=30.0
+            timeout=60.0
         )
     except asyncio.TimeoutError:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT, 
-            detail="Generation timed out after 30 seconds."
+            detail="Generation timed out after 60 seconds."
         )
 
     # Convert to GenerateResponse

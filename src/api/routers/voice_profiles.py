@@ -18,6 +18,7 @@ async def check_client_ownership(db: AsyncSession, client_id: uuid.UUID, tenant_
     return client
 
 @router.put("/{client_id}/voice_profile", response_model=VoiceProfileResponse)
+@router.put("/{client_id}/voice-profile", response_model=VoiceProfileResponse)
 async def set_voice_profile(
     client_id: uuid.UUID,
     profile_in: VoiceProfileSet,
@@ -35,6 +36,7 @@ async def set_voice_profile(
         raise
 
 @router.get("/{client_id}/voice_profile", response_model=VoiceProfileResponse)
+@router.get("/{client_id}/voice-profile", response_model=VoiceProfileResponse)
 async def get_voice_profile(
     client_id: uuid.UUID,
     tenant: Tenant = Depends(get_current_tenant),
@@ -49,6 +51,7 @@ async def get_voice_profile(
     return VoiceProfileResponse.model_validate(profile)
 
 @router.delete("/{client_id}/voice_profile", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{client_id}/voice-profile", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_voice_profile(
     client_id: uuid.UUID,
     tenant: Tenant = Depends(get_current_tenant),

@@ -45,6 +45,7 @@ async def configure_byok_route(
             model=request.llm_model, 
             raw_key=request.llm_api_key
         )
+        session.add(updated_client)
         await session.commit()
         return BYOKConfigResponse(
             llm_provider=updated_client.llm_provider or "",
@@ -64,5 +65,6 @@ async def remove_byok_route(
     client.llm_provider = None
     client.llm_model = None
     client.llm_api_key_encrypted = None
+    session.add(client)
     await session.commit()
     return None

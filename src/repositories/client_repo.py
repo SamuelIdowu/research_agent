@@ -7,7 +7,13 @@ from src.schemas.client import ClientCreate, ClientUpdate
 
 async def create_client(session: AsyncSession, data: ClientCreate, tenant_id: uuid.UUID) -> Client:
     """Creates a new client for a specific tenant."""
+    if data.id:
+        existing = await get_client_by_id(session, data.id, tenant_id)
+        if existing:
+            return existing
+
     client = Client(
+        id=data.id or uuid.uuid4(),
         tenant_id=tenant_id,
         name=data.name,
         usage_cap=data.usage_cap
